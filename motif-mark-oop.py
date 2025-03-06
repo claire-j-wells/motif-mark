@@ -34,7 +34,6 @@ def oneline_fasta(file_input,first_output):
 
 #We want to split the exons and introns for the drawing to know whether we want a line or a box. 
 def exon_intron_split(sequence):
-    #instring = "ABcdEFgh"
     uplow = sequence[0].isupper() # boolean to check whether the first letter is uppercase or not
     splitted = []
     new_word = ""
@@ -56,7 +55,6 @@ def exon_intron_split(sequence):
     else:
                 splitted.append(("I",new_word,len(new_word),position_counter-len(new_word)))
       # bc no change at end of string
-    #print(splitted)
     return(splitted)
 
 def motif_permutations(motif):
@@ -107,6 +105,7 @@ def motif_permutations(motif):
 
 
 #CLASSES
+
 class Gene:
     name = None
     sequence = None           
@@ -127,14 +126,14 @@ class Gene:
 
 class Motifs:
     gene_name = None
-    name = None #grab the actual motif
-    length = None            #grab the length of the motif
+    name = None 
+    length = None            
     motif_var = None
     position = None
     def __init__(self,motif): 
         self.gene_name = []
-        self.name = motif.strip("\n")              #grab the actual motif
-        self.length = len(self.name)            #grab the length of the motif
+        self.name = motif.strip("\n")              
+        self.length = len(self.name)            
         self.motif_var = motif_permutations(motif)
         self.position = []
 
@@ -155,13 +154,21 @@ class Storage_Bin:
 
 
 #ESTABLISH A LIST OF GENE OBJECTS
+
+#for future use, we want to split the file input into variables to fstring her later
 file_name = file
+#split by period to only get the prefix
 split = file_name.split(".")
+#index out the prefix and assign it to a variable
 file_pre = split[0]
 
+#run one_line fasta 
 oneline_fasta(file, f'{file_pre}_2.fa')
 
+#pass one line fasta output into for look to make gene objects
 with open(f'{file_pre}_2.fa', "r") as the_file:
+
+    #store gene objects in a list to iterate through later
     gene_obj_list = []
     for line in the_file:
         if line.startswith(">"):
@@ -175,30 +182,30 @@ with open(f'{file_pre}_2.fa', "r") as the_file:
 #ESTABLISH MOTIF OBJECTS
 
 with open(motif, "r") as mot:
-    #motif_list is a list of motif OBJECTS
+
+    #motif_list is a list of motif OBJECTS to iterate through later
     motif_list = []
     for line in mot:
         line = line.strip("\n")
         line = line.replace("U", "T")
         m=Motifs(line)
-        #print(m.motif_var)
         motif_list.append(m)
 
+#list of colors to index through during the drawing process 
 colors_list= [(51, 180, 10),(57, 48, 73),(218, 21, 177),(80, 213, 255),(244, 178, 65)]
 
 #ESTABLISH STORAGE BIN OBJECTS FOR DRAWING
 
+#There should be a storage bin object for every single motif that is found in the FASTA file 
 def grab_position_motifs(gene_obj_list,motif_list):
+    '''This function takes in two lists of objects (gene objects and motif objects)
+    and it passes the information from these object into a new storage bin object for drawing '''
     storage_bin_list = []
     for gene_object in gene_obj_list:
-        #print("hi")
-        #seq = gene_object.sequence_single_case
         gene_name = gene_object.name
         for j,letter in enumerate(gene_object.sequence_single_case):
             #print(letter)
             for i, objects in enumerate(motif_list):
-                #print(i)
-                #print(objects.name)
                 motif_orig = objects.name
                 motif_name = objects.motif_var
                 mot_length = objects.length
@@ -212,6 +219,7 @@ def grab_position_motifs(gene_obj_list,motif_list):
         #print(motif_loc)
     return(storage_bin_list)
 
+#assign the outputted list from the function above to a variable. 
 storage_bin_list=grab_position_motifs(gene_obj_list,motif_list)
 
 gene_lengths_list = []
@@ -235,9 +243,8 @@ context.set_font_size(25)
 context.select_font_face(
         "Arial", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_NORMAL)
 
+
 for gene_object in gene_obj_list:
-    #print(gene_object.name)
-    #print(gene_object.sequence_len)
     context.set_source_rgb(0, 0, 0)
     context.move_to(x_start,y_start)# y_increase)
     context.line_to(gene_object.sequence_len,y_start)
@@ -270,16 +277,23 @@ for gene_object in gene_obj_list:
             context.fill()       
     y_start=y_start+300
 
+#BUILD THE LEGEND
+
+#this allows the legend to move around and start drawing relative 
+#to how many genes are present in the FASTA file
 
 legend_start_y = y_start - 100
 move_text_y = y_start - 80
 
+#Build a dictionary with each motif and its respective color 
 motif_color_dict = {}
 for box_object in storage_bin_list:
     motif_color_dict[box_object.motif_orig] = box_object.color
 
+#Seperately add an Exon entry because Exons are not stored as an object in storage_bin
 motif_color_dict.update({"Exon": (0,0,0)})
 
+#Due to issues with opacity in the lends, Exons are drawn first outside the for-loop
 for key in motif_color_dict:
     if key == "Exon":
         context.set_source_rgb(motif_color_dict[key][0]/255,motif_color_dict[key][1]/255, motif_color_dict[key][2]/255)
@@ -291,6 +305,7 @@ for key in motif_color_dict:
         context.stroke()
         legend_start_y = legend_start_y + 50
         move_text_y = move_text_y + 50
+#If the key does not equal Exon, then draw the legend normally AND include opacity 
     else:       
         legend_start_x = 50
         move_text_x = 150
@@ -304,4 +319,5 @@ for key in motif_color_dict:
         legend_start_y = legend_start_y + 50
         move_text_y = move_text_y + 50
 
+#Write to surface with the correct prefix name 
 surface.write_to_png(f'{file_pre}.png')
