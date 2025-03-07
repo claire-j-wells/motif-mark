@@ -18,6 +18,8 @@ motif = args.m
 #FUNCTIONS
 
 def oneline_fasta(file_input,first_output):
+    '''This function makes a FASTA file one line and outputs 
+    a new file'''
     first_line=True
     with open(first_output,"w") as op: ##to get the files on a single line
         with open(file_input,"r") as file:
@@ -34,6 +36,7 @@ def oneline_fasta(file_input,first_output):
 
 #We want to split the exons and introns for the drawing to know whether we want a line or a box. 
 def exon_intron_split(sequence):
+    '''This function splits up exons and introns'''
     uplow = sequence[0].isupper() # boolean to check whether the first letter is uppercase or not
     splitted = []
     new_word = ""
@@ -58,6 +61,8 @@ def exon_intron_split(sequence):
     return(splitted)
 
 def motif_permutations(motif):
+    '''This function spits out all the 
+    given permutations of a motif'''
     wobbles = {
     "Y":["T","C"],
     "W":["A","T"],
@@ -107,6 +112,9 @@ def motif_permutations(motif):
 #CLASSES
 
 class Gene:
+    '''This is a class that stores the information 
+    from each of the records from the input
+    FASTA file'''
     name = None
     sequence = None           
     sequence_len = None
@@ -125,6 +133,8 @@ class Gene:
         self.sequence_single_case = the_sequence.upper() 
 
 class Motifs:
+    '''This is a class that stores all
+    the motif objects from the text file'''
     gene_name = None
     name = None 
     length = None            
@@ -138,6 +148,9 @@ class Motifs:
         self.position = []
 
 class Storage_Bin:
+    '''This is a class that holds all the 
+    information from the Motif and Gene class 
+    and is used for making the drawing'''
     gene_name = None
     motif = None
     position = None 
